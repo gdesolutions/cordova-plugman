@@ -61,27 +61,23 @@ module.exports.uninstallPlugin = function(id, plugins_dir, options) {
 
     var plugin_dir = path.join(plugins_dir, id);
 
-    // @tests - important this event is checked spec/uninstall.spec.js
-    events.emit('log', 'Removing "'+ id +'"');
-
     // If already removed, skip.
-    if ( !fs.existsSync(plugin_dir) ) {
-        events.emit('verbose', 'Plugin "'+ id +'" already removed ('+ plugin_dir +')');
+    if (!fs.existsSync(plugin_dir)) {
         return Q();
     }
 
     var xml_path  = path.join(plugin_dir, 'plugin.xml')
       , plugin_et = xml_helpers.parseElementtreeSync(xml_path);
 
+    events.emit('log', 'Deleting "'+ id +'"');
+
     var doDelete = function(id) {
         var plugin_dir = path.join(plugins_dir, id);
-        if ( !fs.existsSync(plugin_dir) ) {
-            events.emit('verbose', 'Plugin "'+ id +'" already removed ('+ plugin_dir +')');
-            return Q();
-        }
+        if ( !fs.existsSync(plugin_dir) ) 
+            return;
 
         shell.rm('-rf', plugin_dir);
-        events.emit('verbose', 'Deleted "'+ id +'"');
+        events.emit('verbose', '"'+ id +'" deleted.');
     };
 
     // We've now lost the metadata for the plugins that have been uninstalled, so we can't use that info.
@@ -89,11 +85,7 @@ module.exports.uninstallPlugin = function(id, plugins_dir, options) {
     // anything depends on them, or if they're listed as top-level.
     // If neither, they can be deleted.
     var top_plugin_id = id;
-
-    // Recursively remove plugins which were installed as dependents (that are not top-level)
-    // optional?
-    var recursive = true;
-    var toDelete = recursive ? plugin_et.findall('dependency') : [];
+    var toDelete = plugin_et.findall('dependency');
     toDelete = toDelete && toDelete.length ? toDelete.map(function(p) { return p.attrib.id; }) : [];
     toDelete.push(top_plugin_id);
 
@@ -103,26 +95,14 @@ module.exports.uninstallPlugin = function(id, plugins_dir, options) {
         return fs.existsSync(path.join(plugins_dir, platform + '.json'));
     });
 
-    // Can have missing plugins on some platforms when not supported..
     var dependList = {};
-    platforms.forEach(function(platform) {
+    platforms.forEach(function(platform) {				   
         var depsInfo = dependencies.generate_dependency_info(plugins_dir, platform);
         var tlps = depsInfo.top_level_plugins,
             deps, i;
 
-        // Top-level deps must always be explicitely asked to remove by user
-        tlps.forEach(function(plugin_id){
-            if(top_plugin_id == plugin_id)
-                return;
-
-            var i = toDelete.indexOf(plugin_id);
-            if(i >= 0)
-                toDelete.splice(i, 1);
-        });
-
         toDelete.forEach(function(plugin) {
             deps = dependencies.dependents(plugin, depsInfo);
-
             var i = deps.indexOf(top_plugin_id);
             if(i >= 0)
                  deps.splice(i, 1); // remove current/top-level plugin as blocking uninstall
@@ -142,15 +122,8 @@ module.exports.uninstallPlugin = function(id, plugins_dir, options) {
             if(options.force) {
                 events.emit('log', msg +' but forcing removal.');
             } else {
-                // @tests - error and event message is checked spec/uninstall.spec.js
-                msg += ' and cannot be removed (hint: use -f or --force)';
-
-                if(plugin_id == top_plugin_id) {
-                    return Q.reject( new Error(msg) );
-                } else {
-                    events.emit('warn', msg +' and cannot be removed (hint: use -f or --force)');
-                    continue;	
-                }
+                events.emit('warn', msg +' and cannot be removed (hint: use -f or --force)');
+                continue;
             }
         }
 
@@ -190,7 +163,7 @@ function runUninstallPlatform(actions, platform, project_dir, plugin_dir, plugin
 
     var promise;
     if (deps && deps.length && danglers && danglers.length) {
-
+        
         // @tests - important this event is checked spec/uninstall.spec.js
         events.emit('log', 'Uninstalling ' + danglers.length + ' dependent plugins.');
         promise = Q.all(
@@ -221,7 +194,7 @@ function handleUninstall(actions, platform, plugin_id, plugin_et, project_dir, w
     var platformTag = plugin_et.find('./platform[@name="'+platform+'"]');
     www_dir = www_dir || handler.www_dir(project_dir);
     events.emit('log', 'Uninstalling ' + plugin_id + ' from ' + platform);
-    
+
     var assets = plugin_et.findall('./asset');
     if (platformTag) {
         var sourceFiles = platformTag.findall('./source-file'),
@@ -233,39 +206,24 @@ function handleUninstall(actions, platform, plugin_id, plugin_et, project_dir, w
 
         // queue up native stuff
         sourceFiles && sourceFiles.forEach(function(source) {
-            actions.push(actions.createAction(handler["source-file"].uninstall, 
-                                             [source, project_dir, plugin_id], 
-                                             handler["source-file"].install, 
-                                             [source, plugin_dir, project_dir, plugin_id]));
+            actions.push(actions.createAction(handler["source-file"].uninstall, [source, project_dir, plugin_id], handler["source-file"].install, [source, plugin_dir, project_dir, plugin_id]));
         });
 
         headerFiles && headerFiles.forEach(function(header) {
-            actions.push(actions.createAction(handler["header-file"].uninstall, 
-                                             [header, project_dir, plugin_id], 
-                                             handler["header-file"].install, 
-                                             [header, plugin_dir, project_dir, plugin_id]));
+            actions.push(actions.createAction(handler["header-file"].uninstall, [header, project_dir, plugin_id], handler["header-file"].install, [header, plugin_dir, project_dir, plugin_id]));
         });
 
         resourceFiles && resourceFiles.forEach(function(resource) {
-            actions.push(actions.createAction(handler["resource-file"].uninstall, 
-                                              [resource, project_dir, plugin_id], 
-                                              handler["resource-file"].install, 
-                                              [resource, plugin_dir, project_dir]));
+            actions.push(actions.createAction(handler["resource-file"].uninstall, [resource, project_dir, plugin_id], handler["resource-file"].install, [resource, plugin_dir, project_dir]));
         });
 
         // CB-5238 custom frameworks only
         frameworkFiles && frameworkFiles.forEach(function(framework) {
-            actions.push(actions.createAction(handler["framework"].uninstall, 
-                                              [framework, project_dir, plugin_id], 
-                                              handler["framework"].install, 
-                                              [framework, plugin_dir, project_dir]));
+            actions.push(actions.createAction(handler["framework"].uninstall, [framework, project_dir, plugin_id], handler["framework"].install, [framework, plugin_dir, project_dir]));
         });
 
         libFiles && libFiles.forEach(function(source) {
-            actions.push(actions.createAction(handler["lib-file"].uninstall, 
-                                              [source, project_dir, plugin_id], 
-                                              handler["lib-file"].install, 
-                                              [source, plugin_dir, project_dir, plugin_id]));
+            actions.push(actions.createAction(handler["lib-file"].uninstall, [source, project_dir, plugin_id], handler["lib-file"].install, [source, plugin_dir, project_dir, plugin_id]));
         });
     }
 
