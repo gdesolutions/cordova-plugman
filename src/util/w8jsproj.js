@@ -5,6 +5,7 @@
 
 var xml_helpers = require('./xml-helpers'),
     et = require('elementtree'),
+    events = require('../events'),
     fs = require('fs'),
     shell = require('shelljs'),
     path = require('path');
@@ -16,7 +17,7 @@ var WinCplusplusProjectTypeGUID = "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"; // .
 
 
 function jsproj(location) {
-    require('../../plugman').emit('verbose','creating jsproj from project at : ' + location);
+    events.emit('verbose','creating jsproj from project at : ' + location);
     this.location = location;
     this.xml = xml_helpers.parseElementtreeSync(location);
     return this;
@@ -50,7 +51,7 @@ jsproj.prototype = {
 
     addReference:function(relPath,src) {
 
-        require('../../plugman').emit('verbose','addReference::' + relPath);
+        events.emit('verbose','addReference::' + relPath);
 
         var item = new et.Element('ItemGroup');
         var extName = path.extname(relPath);
@@ -76,7 +77,7 @@ jsproj.prototype = {
     },
     
     removeReference:function(relPath) {
-        require('../../plugman').emit('verbose','removeReference::' + relPath);
+        events.emit('verbose','removeReference::' + relPath);
 
         var extName = path.extname(relPath);
         var includeText = path.basename(relPath,extName);

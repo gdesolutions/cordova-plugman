@@ -17,12 +17,13 @@
  *
 */
 
-var common = require('./common'),
+var fs = require('fs'),
     path = require('path'),
+    common = require('./common'),
+    events = require('../events'),
+    xml_helpers = require('../util/xml-helpers'),
     glob = require('glob'),
-    fs = require('fs'),
-    csproj = require('../util/csproj'),
-    xml_helpers = require('../util/xml-helpers');
+    csproj = require('../util/csproj');
 
 module.exports = {
     www_dir:function(project_dir) {
@@ -57,23 +58,23 @@ module.exports = {
     },
     "header-file": {
         install:function(source_el, plugin_dir, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'header-file.install is not supported for wp8');
+            events.emit('verbose', 'header-file.install is not supported for wp8');
         },
         uninstall:function(source_el, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'header-file.uninstall is not supported for wp8');
+            events.emit('verbose', 'header-file.uninstall is not supported for wp8');
         }
     },
     "resource-file":{
         install:function(el, plugin_dir, project_dir, plugin_id, project_file) {
-            require('../../plugman').emit('verbose', 'resource-file.install is not supported for wp8');
+            events.emit('verbose', 'resource-file.install is not supported for wp8');
         },
         uninstall:function(el, project_dir, plugin_id, project_file) {
-            require('../../plugman').emit('verbose', 'resource-file.uninstall is not supported for wp8');
+            events.emit('verbose', 'resource-file.uninstall is not supported for wp8');
         }
     },
     "framework":{
         install:function(el, plugin_dir, project_dir, plugin_id, project_file) {
-            require('../../plugman').emit('verbose', 'wp8 framework install :: ' + plugin_id  );
+            events.emit('verbose', 'wp8 framework install :: ' + plugin_id  );
 
             var src = el.attrib['src'];
             var dest = src; // if !isCustom, we will just add a reference to the file in place
@@ -88,7 +89,7 @@ module.exports = {
 
         },
         uninstall:function(el, project_dir, plugin_id, project_file) {
-            require('../../plugman').emit('verbose', 'wp8 framework uninstall :: ' + plugin_id  );
+            events.emit('verbose', 'wp8 framework uninstall :: ' + plugin_id  );
 
             var src = el.attrib['src'];
             var isCustom = el.attrib.custom == "true";
@@ -103,10 +104,10 @@ module.exports = {
     },
     "lib-file": {
         install:function(source_el, plugin_dir, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'lib-file.install is not supported for wp8');
+            events.emit('verbose', 'lib-file.install is not supported for wp8');
         },
         uninstall:function(source_el, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'lib-file.uninstall is not supported for wp8');
+            events.emit('verbose', 'lib-file.uninstall is not supported for wp8');
         }
     }    
 };

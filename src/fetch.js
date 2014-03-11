@@ -5,9 +5,10 @@ var shell   = require('shelljs'),
     xml_helpers = require('./util/xml-helpers'),
     metadata = require('./util/metadata'),
     path    = require('path'),
+    events  = require('./events'),
     Q       = require('q'),
     registry = require('./registry/registry');
-// XXX: leave the require('../plugman') because jasmine shits itself if you declare it up top
+
 // possible options: link, subdir, git_ref, client, expected_id
 // Returns a promise.
 module.exports = function fetchPlugin(plugin_src, plugins_dir, options) {
@@ -42,7 +43,7 @@ module.exports = function fetchPlugin(plugin_src, plugins_dir, options) {
 
     // If it looks like a network URL, git clone it.
     if ( uri.protocol && uri.protocol != 'file:' && uri.protocol != 'c:' && !plugin_src.match(/^\w+:\\/)) {
-        require('../plugman').emit('log', 'Fetching plugin "' + plugin_src + '" via git clone');
+        events.emit('log', 'Fetching plugin "' + plugin_src + '" via git clone');
         if (options.link) {
             return Q.reject(new Error('--link is not supported for git URLs'));
         } else {
@@ -79,11 +80,11 @@ module.exports = function fetchPlugin(plugin_src, plugins_dir, options) {
             var local_dir = findLocalPlugin(plugin_src, options.searchpath);
             if (local_dir) {
                 p = Q(local_dir);
-                require('../plugman').emit('verbose', 'Found ' + plugin_src + ' at ' + local_dir);
+                events.emit('verbose', 'Found ' + plugin_src + ' at ' + local_dir);
             } else {
                 // If not found in local search path, fetch from the registry.
                 linkable = false;
-                require('../plugman').emit('log', 'Fetching plugin "' + plugin_src + '" via plugin registry');
+                events.emit('log', 'Fetching plugin "' + plugin_src + '" via plugin registry');
                 p = registry.fetch([plugin_src], options.client);
             }
         }
@@ -153,11 +154,11 @@ function copyPlugin(plugin_dir, plugins_dir, link) {
     var dest = path.join(plugins_dir, plugin_id);
     shell.rm('-rf', dest);
     if (link) {
-        require('../plugman').emit('verbose', 'Linking plugin "' + plugin_dir + '" => "' + dest + '"');
+        events.emit('verbose', 'Linking plugin "' + plugin_dir + '" => "' + dest + '"');
         fs.symlinkSync(plugin_dir, dest, 'dir');
     } else {
         shell.mkdir('-p', dest);
-        require('../plugman').emit('verbose', 'Copying plugin "' + plugin_dir + '" => "' + dest + '"');
+        events.emit('verbose', 'Copying plugin "' + plugin_dir + '" => "' + dest + '"');
         shell.cp('-R', path.join(plugin_dir, '*') , dest);
     }
 

@@ -27,9 +27,11 @@ function toCamelCase(str) {
     }).join('');
 }
 
-var fs = require('fs')
-   , path = require('path')
-   , xml_helpers = require(path.join(__dirname, '..', 'util', 'xml-helpers'));
+var fs = require('fs'),
+    path = require('path'),
+    common = require('./common'),
+    events = require('../events'),
+    xml_helpers = require('../util/xml-helpers');
 
 module.exports = {
     www_dir:function(project_dir) {
@@ -106,18 +108,18 @@ module.exports = {
     },
     "framework": {
         install:function(source_el, plugin_dir, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'framework.install is not supported for ubuntu');
+            events.emit('verbose', 'framework.install is not supported for ubuntu');
         },
         uninstall:function(source_el, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'framework.uninstall is not supported for ubuntu');
+            events.emit('verbose', 'framework.uninstall is not supported for ubuntu');
         }
     },
     "lib-file": {
         install:function(source_el, plugin_dir, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'lib-file.install is not supported for ubuntu');
+            events.emit('verbose', 'lib-file.install is not supported for ubuntu');
         },
         uninstall:function(source_el, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'lib-file.uninstall is not supported for ubuntu');
+            events.emit('verbose', 'lib-file.uninstall is not supported for ubuntu');
         }
     }
 };

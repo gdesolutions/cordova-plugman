@@ -17,13 +17,15 @@
  *
 */
 
-var path = require('path')
-  , fs   = require('fs')
-  , glob = require('glob')
-  , xcode = require('xcode')
-  , plist = require('plist-with-patches')
-  , shell = require('shelljs')
-  , cachedProjectFiles = {};
+var fs = require('fs'),
+    path = require('path'),
+    common = require('./common'),
+    events = require('../events'),
+    glob = require('glob'),
+    xcode = require('xcode'),
+    plist = require('plist-with-patches'),
+    shell = require('shelljs'),
+    cachedProjectFiles = {};
 
 module.exports = {
     www_dir:function(project_dir) {
@@ -141,10 +143,10 @@ module.exports = {
     },
     "lib-file": {
         install:function(source_el, plugin_dir, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'lib-file.install is not supported for ios');
+            events.emit('verbose', 'lib-file.install is not supported for ios');
         },
         uninstall:function(source_el, project_dir, plugin_id) {
-            require('../../plugman').emit('verbose', 'lib-file.uninstall is not supported for ios');
+            events.emit('verbose', 'lib-file.uninstall is not supported for ios');
         }
     },    
     parseProjectFile:function(project_dir) {
